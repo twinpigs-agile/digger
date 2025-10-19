@@ -1,7 +1,5 @@
 # REGISTER_DOCTEST
 import os
-import zipfile
-import tempfile
 from typing import BinaryIO
 from fs.zipfs import ZipFS
 
@@ -11,6 +9,7 @@ def smart_open(path: str | os.PathLike[str]) -> BinaryIO:
     Opens a file transparently, supporting access to files inside ZIP archives.
 
     Examples:
+        >>> import zipfile, tempfile
         >>> with tempfile.TemporaryDirectory() as tmpdir:
         ...     # Create a regular file
         ...     file_path = os.path.join(tmpdir, "file.txt")
