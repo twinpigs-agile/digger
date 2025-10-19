@@ -1,0 +1,9 @@
+Babel
+python-gettext
+PyInstaller
+mypy
+black
+flake8
+pygame
+Pillow
+fs
