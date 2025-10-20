@@ -155,8 +155,12 @@ pyinstaller_build () {
     ADD_DATA+=("--add-data" "$f${S}$rel_dir")
   done < <(find ./templates -type f -print0)
 
-  while IFS= read -r -d '' f; do
+  pushd ..
+  zip -r ./out/assets.zip assets test_assets
+  ADD_DATA+=("--add-data" "./out/assets.zip${S}assets.zip")
+  popd
 
+  while IFS= read -r -d '' f; do
     rel_dir="$(dirname "${f#./}")"
     ADD_DATA+=("--add-data" "$f${S}$rel_dir")
   done < <(find ./locales -type f -name '*.mo' -print0)
