@@ -1,5 +1,4 @@
 {
-  "directional" : true,
   "transform" : {"r": [], "l" : ["mirror"], "u": ["rotate", "rotate", "rotate", "mirror"], "d": ["rotate"]},
   "frame_count" : 4,
   "variations" : ["a", "b"],

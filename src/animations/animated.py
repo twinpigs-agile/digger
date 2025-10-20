@@ -60,7 +60,6 @@ class AnimatedSprite:
         transformations = cast(Dict[str, List[str]], self.animation_data["transform"])[
             direction
         ]
-
         for transformation in transformations:
             if transformation == "mirror":
                 # Flip horizontally
@@ -78,30 +77,6 @@ class AnimatedSprite:
                 raise ValueError(f"Unknown transformation: {transformation}")
 
         return image, anchor
-
-    """def _apply_transformations(
-            self,
-            image: pygame.Surface,
-            direction: str,
-            anchor: List[int]
-    ) -> Tuple[pygame.Surface, List[int]]:
-        transformations = self.animation_data['transform'][direction]
-
-        for transformation in transformations:
-            if transformation == 'mirror':
-                image = pygame.transform.flip(image, True, False)
-                anchor[0] = image.get_width() - anchor[0]
-
-            elif transformation == 'rotate':
-                image = pygame.transform.rotate(image, -90)
-                old_anchor = anchor[:]
-                anchor = [image.get_width() - old_anchor[1], old_anchor[0]]
-
-            else:
-                raise ValueError(f"Unknown transformation: {transformation}")
-
-        return image, anchor
-    """
 
     def create_animation(self) -> "Animation":
         return Animation(self)
