@@ -15,6 +15,9 @@ MAIN_MODULE = sys.modules["__main__"]
 NO_DISPLAY_ON_TEST = True
 ASSERT_VIEW_ZOOM = 32
 
+if NO_DISPLAY_ON_TEST:
+    os.environ["SDL_VIDEODRIVER"] = "dummy"
+
 SRC_DIR = os.path.dirname(os.path.abspath(__file__))
 SRC_DIR = getattr(sys, "_MEIPASS", SRC_DIR)  # PyInstaller support
 

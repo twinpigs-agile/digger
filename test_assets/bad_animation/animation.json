@@ -1,0 +1,7 @@
+{
+  "transform" : {"r": [], "l" : ["mirror"], "u": ["rotate", "rotate", "twist", "mirror"], "d": ["rotate"]},
+  "frame_count" : 4,
+  "variations" : ["a"],
+  "animations": {"default": [0]},
+  "anchors" : [[1, 1]]
+}

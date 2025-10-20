@@ -1,6 +1,5 @@
 import unittest
 import pygame
-import os
 from typing import Tuple
 
 import settings
@@ -15,15 +14,10 @@ class BaseSurfaceTest(unittest.TestCase):
         self.surface: pygame.Surface | None = None
 
     def setUp(self) -> None:
-        if settings.NO_DISPLAY_ON_TEST:
-            os.environ["SDL_VIDEODRIVER"] = "dummy"
-
         pygame.init()
         pygame.display.init()
         self.surface = pygame.Surface(self._size)
 
-        # Если NO_DISPLAY_ON_TEST, создаём отдельную поверхность
-        # Иначе используем поверхность окна
         if settings.NO_DISPLAY_ON_TEST:
             pygame.display.set_mode(self._size)
         else:

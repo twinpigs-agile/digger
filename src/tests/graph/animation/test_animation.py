@@ -15,7 +15,7 @@ SURFACE_SIZE = (4, 4)
 class TestAnimatedSprite(BaseSurfaceTest):
     def __init__(self, *args, **kwargs):
         super().__init__(SURFACE_SIZE, *args, **kwargs)
-        self.sprite_dir = asset_path("digger")
+        self.sprite_dir = asset_path("animation")
         self.animated_sprite = None
         self.reference_images: Dict[str, pygame.Surface] = {}
 
@@ -135,13 +135,19 @@ class TestAnimatedSprite(BaseSurfaceTest):
         for anim_name, frame_sequence in animations.items():
             animation.start_animation(anim_name)
             actual_order = []
-            for _ in range(len(frame_sequence)):
+            for i in range(len(frame_sequence)):
                 actual_order.append(
                     animation.current_animation[animation.current_frame_index]
                 )
+                self.assertTrue(animation.is_at_start() != bool(i))
                 animation.next_frame()
             self.assertEqual(
                 actual_order,
                 frame_sequence,
                 f"Frame order mismatch for animation {anim_name}",
             )
+
+    def test_bad_animation(self):
+        self.assertRaises(
+            ValueError, AnimatedSprite, asset_path("bad_animation"), (1, 1)
+        )
