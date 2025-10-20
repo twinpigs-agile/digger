@@ -150,14 +150,22 @@ pyinstaller_build () {
   WORK="../out/temp"
   ADD_DATA=()
 
-  while IFS= read -r -d '' f; do
-    rel_dir="$(dirname "${f#./}")"
-    ADD_DATA+=("--add-data" "$f${S}$rel_dir")
-  done < <(find ./templates -type f -print0)
-
   pushd ..
-  zip -r ./out/assets.zip assets test_assets
-  ADD_DATA+=("--add-data" "./out/assets.zip${S}assets.zip")
+  echo Creating ZIP in: `pwd`
+  # zip -r ./out/assets.zip assets test_assets
+  ${PYSCRIPTS}/python -c "
+import zipfile, os
+os.makedirs('./out', exist_ok=True)
+with zipfile.ZipFile('./out/assets.zip', 'w', zipfile.ZIP_DEFLATED) as zf:
+    for folder in ['assets', 'test_assets']:
+        for root, _, files in os.walk(folder):
+            for file in files:
+                full_path = os.path.join(root, file)
+                arcname = os.path.relpath(full_path, '.')
+                zf.write(full_path, arcname)
+"
+
+  ADD_DATA+=("--add-data" "../out/assets.zip${S}.")
   popd
 
   while IFS= read -r -d '' f; do

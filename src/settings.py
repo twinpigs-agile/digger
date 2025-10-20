@@ -23,9 +23,11 @@ LOCALES_DIR = os.path.join(SRC_DIR, "locales")
 ASSETS_DIR = "assets" if hasattr(MAIN_MODULE, "MAIN_ASSETS") else "test_assets"
 
 if hasattr(sys, "_MEIPASS"):  # pragma: no cover
-    ASSETS_DIR = os.path.join("assets.zip", ASSETS_DIR)
+    ASSETS_DIR = os.path.join(getattr(sys, "_MEIPASS"), "assets.zip", ASSETS_DIR)
 else:
     ASSETS_DIR = os.path.join(os.path.dirname(SRC_DIR), ASSETS_DIR)
+
+print("ASSETS_DIR =", ASSETS_DIR)
 
 
 def asset_path(asset: str) -> str:
