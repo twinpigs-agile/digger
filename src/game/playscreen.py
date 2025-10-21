@@ -41,7 +41,6 @@ class BackgroundWindow(Window):
             text_rect.center = self.get_rect().center
             self.env.display.blit(text, text_rect)
 
-
     def set_rect_color(self, color: Tuple[int, int, int]) -> None:
         """Set the color for background rectangles"""
         self.rect_color = color
@@ -74,8 +73,6 @@ class StatusWindow(Window):
     def tick(self, events: list[pygame.event.Event]) -> None:
         # Fill status window with blue color
         pygame.draw.rect(self.env.display, self.color, self.get_rect())
-
-
 
 
 class PlayScreen(Screen):
@@ -149,7 +146,7 @@ class PlayScreen(Screen):
             #            = game_width * (100 + status_percent) / 100
             # game_width = display_width * 100 / (100 + status_percent)
             max_game_width = (display_width * 100) // (100 + status_percent)
-            
+
             # Recalculate height based on new width
             # max_game_height = width / (board_width_ratio / board_height_ratio)
             #                 = width * board_height_ratio / board_width_ratio
