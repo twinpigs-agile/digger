@@ -51,6 +51,7 @@ class Screen:
     def tick(self, events: list[pygame.event.Event]) -> None:
         for _, window in self._windows:
             window.tick(events)
+        pygame.display.flip()
 
     def add_window(self, priority: int, window: Window) -> None:
         self._windows.append((priority, window))

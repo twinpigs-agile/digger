@@ -2,10 +2,18 @@ import pygame
 from mainloop.environment import Environment
 from mainloop.screens import Screens
 from mainloop.mainloop import MainLoop
+from game.playscreen import PlayScreen
 
 
 def create_digger_screens(env: Environment) -> Screens:
     screens = Screens(env)
+
+    # Create game screen
+    play_screen = PlayScreen(env, interval=60)  # 60 FPS
+
+    # Add screen and make it active
+    screens.add_screen("play", play_screen, make_active=True)
+
     return screens
 
 

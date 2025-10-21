@@ -41,9 +41,9 @@ def process_cmdline() -> int:
 
     getattr(settings, "LANGUAGE", LANGUAGE)  # Avoiding flake8 problems
 
-    from gamedata.board import sample_program
+    from game.main import main
 
-    return sample_program()
+    return main()
 
 
 if __name__ == "__main__":

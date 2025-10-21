@@ -12,10 +12,11 @@ import sys
 
 MAIN_MODULE = sys.modules["__main__"]
 
+# Keep this flag enabled
 NO_DISPLAY_ON_TEST = True
 ASSERT_VIEW_ZOOM = 32
 
-if NO_DISPLAY_ON_TEST:
+if NO_DISPLAY_ON_TEST and not hasattr(MAIN_MODULE, "MAIN_ASSETS"):
     os.environ["SDL_VIDEODRIVER"] = "dummy"
 
 SRC_DIR = os.path.dirname(os.path.abspath(__file__))
