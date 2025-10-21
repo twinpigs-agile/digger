@@ -75,16 +75,23 @@ class StatusWindow(Window):
         pygame.draw.rect(self.env.display, self.color, self.get_rect())
 
 
-BOARD_SIZE = (15, 10)  # Game board aspect ratio (width, height)
-STATUS_WIDTH_PERCENT = 20  # Status width percentage of game board width
 
 
 class PlayScreen(Screen):
     """Game screen with game board and status windows"""
 
-
-    def __init__(self, env: Environment, interval: int = 60) -> None:
+    def __init__(
+        self,
+        env: Environment,
+        interval: int = 60,
+        board_size: Tuple[int, int] = (15, 10),
+        status_width_percent: int = 20,
+    ) -> None:
         super().__init__(env, interval)
+
+        # Store configuration
+        self.board_size = board_size
+        self.status_width_percent = status_width_percent
 
         # Get display dimensions
         display_width, display_height = env.display.get_size()
@@ -120,8 +127,8 @@ class PlayScreen(Screen):
         and list of rectangles to cover the remaining screen area
         """
         # Calculate maximum game board size
-        # considering BOARD_SIZE aspect ratio
-        board_ratio = self.BOARD_SIZE[0] / self.BOARD_SIZE[1]  # width/height
+        # considering board_size aspect ratio
+        board_ratio = self.board_size[0] / self.board_size[1]  # width/height
 
         # Calculate status width as percentage of game board width
         # First try maximum height
@@ -129,22 +136,22 @@ class PlayScreen(Screen):
         max_game_width = int(max_game_height * board_ratio)
 
         # Check if game board + status fits in width
-        status_width = int(max_game_width * self.STATUS_WIDTH_PERCENT / 100)
+        status_width = int(max_game_width * self.status_width_percent / 100)
         total_width = max_game_width + status_width
 
         if total_width > display_width:
             # Need to reduce sizes
             # Calculate maximum width for game board
             max_total_width = display_width
-            # status_width = game_width * STATUS_WIDTH_PERCENT / 100
-            # total_width = game_width + status_width = game_width * (1 + STATUS_WIDTH_PERCENT / 100)
+            # status_width = game_width * status_width_percent / 100
+            # total_width = game_width + status_width = game_width * (1 + status_width_percent / 100)
             max_game_width = int(
-                max_total_width / (1 + self.STATUS_WIDTH_PERCENT / 100)
+                max_total_width / (1 + self.status_width_percent / 100)
             )
             max_game_height = int(max_game_width / board_ratio)
 
             # Recalculate status width
-            status_width = int(max_game_width * self.STATUS_WIDTH_PERCENT / 100)
+            status_width = int(max_game_width * self.status_width_percent / 100)
 
         # Calculate total width and height of combined windows
         total_width = max_game_width + status_width
