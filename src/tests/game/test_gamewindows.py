@@ -37,21 +37,22 @@ class TestGameWindowsBase(unittest.TestCase):
     def test_wide_display_default_config(self):
         """Test window calculation for wide display with default config (15x10, 20%)"""
         # Default: board_size=(15, 10), status_width_percent=20
-        # For 1920x1080: total needs to fit, so:
-        # max_game_width = 1920 / (1 + 0.2) = 1600
-        # max_game_height = 1600 / (15/10) = 1066 (rounded)
+        # For 1920x1080: width is constraint
+        # max_game_width = (1920 * 100) // (100 + 20) = 192000 // 120 = 1600
+        # max_game_height = (1600 * 10) // 15 = 16000 // 15 = 1066
+        # status_width = (1600 * 20) // 100 = 320
         play_screen = self.create_play_screen(1920, 1080)
         game_rect, status_rect, background_rects = play_screen._calculate_window_rects(
             1920, 1080
         )
 
-        # Game board height is limited by width constraint, not full display height
-        self.assertEqual(game_rect.width, 1600)  # 1920 / 1.2
-        self.assertAlmostEqual(game_rect.height, 1066, delta=1)  # 1600 / 1.5
+        # Game board dimensions
+        self.assertEqual(game_rect.width, 1600)
+        self.assertEqual(game_rect.height, 1066)
 
-        # Status window should be 20% of game board width
-        self.assertEqual(status_rect.width, 320)  # 1600 * 0.2
-        self.assertEqual(status_rect.height, game_rect.height)
+        # Status window dimensions
+        self.assertEqual(status_rect.width, 320)
+        self.assertEqual(status_rect.height, 1066)
 
         # Status should be adjacent to game board
         self.assertEqual(status_rect.left, game_rect.right)
@@ -63,26 +64,27 @@ class TestGameWindowsBase(unittest.TestCase):
     def test_narrow_display_default_config(self):
         """Test window calculation for narrow display with default config"""
         # For 800x600 with board_size=(15, 10), status_width_percent=20:
-        # max_game_width = 800 / 1.2 = 666
-        # max_game_height = 666 / 1.5 = 444
+        # max_game_width = (800 * 100) // (100 + 20) = 80000 // 120 = 666
+        # max_game_height = (666 * 10) // 15 = 6660 // 15 = 444
+        # status_width = (666 * 20) // 100 = 13320 // 100 = 133
         play_screen = self.create_play_screen(800, 600)
         game_rect, status_rect, background_rects = play_screen._calculate_window_rects(
             800, 600
         )
 
-        # Game board is constrained by width
-        self.assertEqual(game_rect.width, 666)  # 800 / 1.2
-        self.assertAlmostEqual(game_rect.height, 444, delta=1)  # 666 / 1.5
+        # Game board dimensions
+        self.assertEqual(game_rect.width, 666)
+        self.assertEqual(game_rect.height, 444)
 
-        # Status window should be 20% of game board width
-        self.assertEqual(status_rect.width, 133)  # 666 * 0.2 = 133.2 -> 133
-        self.assertEqual(status_rect.height, game_rect.height)
+        # Status window dimensions
+        self.assertEqual(status_rect.width, 133)
+        self.assertEqual(status_rect.height, 444)
 
         # Status should be adjacent to game board
         self.assertEqual(status_rect.left, game_rect.right)
         self.assertEqual(status_rect.top, game_rect.top)
 
-        # Combined windows should fit in display
+        # Combined width should fit in display (may have rounding remainder)
         self.assertLessEqual(game_rect.width + status_rect.width, 800)
 
     def test_custom_board_size_square(self):
@@ -92,11 +94,12 @@ class TestGameWindowsBase(unittest.TestCase):
         )
         game_rect, status_rect, _ = play_screen._calculate_window_rects(800, 600)
 
-        # Board should be square
+        # Board should be square (ratio 10:10 = 1:1)
         self.assertEqual(game_rect.width, game_rect.height)
 
-        # Status should be 10% of game board width
-        self.assertEqual(status_rect.width, int(game_rect.width * 0.1))
+        # Status should be 10% of game board width (using integer division)
+        expected_status_width = (game_rect.width * 10) // 100
+        self.assertEqual(status_rect.width, expected_status_width)
 
     def test_custom_board_size_wide(self):
         """Test with custom board size (2:1 very wide)"""
@@ -105,13 +108,14 @@ class TestGameWindowsBase(unittest.TestCase):
         )
         game_rect, status_rect, _ = play_screen._calculate_window_rects(800, 400)
 
-        # Board aspect ratio should be preserved
-        actual_ratio = game_rect.width / game_rect.height
-        expected_ratio = 20 / 10  # 2.0
-        self.assertAlmostEqual(actual_ratio, expected_ratio, places=1)
+        # Board aspect ratio should be 20:10 = 2:1
+        # Using integer arithmetic: width * 10 should equal height * 20 (approximately)
+        # Allow small rounding error from integer division
+        self.assertEqual(game_rect.width * 10 // 20, game_rect.height)
 
-        # Status should be 15% of game board width
-        self.assertEqual(status_rect.width, int(game_rect.width * 0.15))
+        # Status should be 15% of game board width (using integer division)
+        expected_status_width = (game_rect.width * 15) // 100
+        self.assertEqual(status_rect.width, expected_status_width)
 
     def test_custom_status_width_percent(self):
         """Test with different status width percentages"""
@@ -126,8 +130,8 @@ class TestGameWindowsBase(unittest.TestCase):
                     800, 600
                 )
 
-                # Status width should be correct percentage
-                expected_status_width = int(game_rect.width * status_percent / 100)
+                # Status width should be correct percentage (using integer division)
+                expected_status_width = (game_rect.width * status_percent) // 100
                 self.assertEqual(status_rect.width, expected_status_width)
 
     def test_minimum_display_size_custom_config(self):
@@ -177,12 +181,10 @@ class TestGameWindowsBase(unittest.TestCase):
                     display_w, display_h
                 )
 
-                # Calculate actual aspect ratio
-                actual_ratio = game_rect.width / game_rect.height
-                expected_ratio = board_w / board_h
-
-                # Allow small floating point differences
-                self.assertAlmostEqual(actual_ratio, expected_ratio, places=1)
+                # Check aspect ratio using integer arithmetic
+                # width / height = board_w / board_h
+                # width * board_h = height * board_w (approximately)
+                self.assertEqual(game_rect.width * board_h // board_w, game_rect.height)
 
     def test_generic_status_width_percentage(self):
         """Test status width percentage with various configs"""
@@ -210,8 +212,8 @@ class TestGameWindowsBase(unittest.TestCase):
                     display_w, display_h
                 )
 
-                # Status width should be correct percentage
-                expected_status_width = int(game_rect.width * status_pct / 100)
+                # Status width should be correct percentage (using integer division)
+                expected_status_width = (game_rect.width * status_pct) // 100
                 self.assertEqual(status_rect.width, expected_status_width)
 
     def test_generic_no_window_overlap(self):

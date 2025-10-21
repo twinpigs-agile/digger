@@ -126,32 +126,36 @@ class PlayScreen(Screen):
         Calculate rectangles for game board and status windows,
         and list of rectangles to cover the remaining screen area
         """
-        # Calculate maximum game board size
-        # considering board_size aspect ratio
-        board_ratio = self.board_size[0] / self.board_size[1]  # width/height
+        # Extract board size ratio components
+        board_width_ratio, board_height_ratio = self.board_size
+        status_percent = self.status_width_percent
 
-        # Calculate status width as percentage of game board width
+        # Calculate maximum game board size
         # First try maximum height
         max_game_height = display_height
-        max_game_width = int(max_game_height * board_ratio)
+        # max_game_width = height * (board_width_ratio / board_height_ratio)
+        max_game_width = (max_game_height * board_width_ratio) // board_height_ratio
 
-        # Check if game board + status fits in width
-        status_width = int(max_game_width * self.status_width_percent / 100)
+        # Calculate status width as percentage of game board width
+        # status_width = game_width * status_percent / 100
+        status_width = (max_game_width * status_percent) // 100
         total_width = max_game_width + status_width
 
         if total_width > display_width:
             # Need to reduce sizes
-            # Calculate maximum width for game board
-            max_total_width = display_width
-            # status_width = game_width * status_width_percent / 100
-            # total_width = game_width + status_width = game_width * (1 + status_width_percent / 100)
-            max_game_width = int(
-                max_total_width / (1 + self.status_width_percent / 100)
-            )
-            max_game_height = int(max_game_width / board_ratio)
+            # total_width = game_width + game_width * status_percent / 100
+            #            = game_width * (1 + status_percent / 100)
+            #            = game_width * (100 + status_percent) / 100
+            # game_width = display_width * 100 / (100 + status_percent)
+            max_game_width = (display_width * 100) // (100 + status_percent)
+            
+            # Recalculate height based on new width
+            # max_game_height = width / (board_width_ratio / board_height_ratio)
+            #                 = width * board_height_ratio / board_width_ratio
+            max_game_height = (max_game_width * board_height_ratio) // board_width_ratio
 
             # Recalculate status width
-            status_width = int(max_game_width * self.status_width_percent / 100)
+            status_width = (max_game_width * status_percent) // 100
 
         # Calculate total width and height of combined windows
         total_width = max_game_width + status_width
