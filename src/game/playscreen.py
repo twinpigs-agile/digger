@@ -75,11 +75,13 @@ class StatusWindow(Window):
         pygame.draw.rect(self.env.display, self.color, self.get_rect())
 
 
+BOARD_SIZE = (15, 10)  # Game board aspect ratio (width, height)
+STATUS_WIDTH_PERCENT = 20  # Status width percentage of game board width
+
+
 class PlayScreen(Screen):
     """Game screen with game board and status windows"""
 
-    BOARD_SIZE = (10, 15)  # Game board aspect ratio (width, height)
-    STATUS_WIDTH_PERCENT = 10  # Status width percentage of game board width
 
     def __init__(self, env: Environment, interval: int = 60) -> None:
         super().__init__(env, interval)
