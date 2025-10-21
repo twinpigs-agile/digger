@@ -3,6 +3,8 @@ from typing import List, Tuple
 from mainloop.screens import Screen, Window
 from mainloop.environment import Environment
 
+from settings import NO_REAL_VIDEO
+
 
 class BackgroundWindow(Window):
     """Background window with lowest priority, covering the entire screen"""
@@ -24,22 +26,21 @@ class BackgroundWindow(Window):
                     else:
                         self.set_rect_color((255, 255, 255))  # White
 
-        # Fill main background
-        pygame.draw.rect(self.env.display, self.color, self.get_rect())
-
         # Draw background rectangles
         for rect in self.background_rects:
             pygame.draw.rect(self.env.display, self.rect_color, rect)
 
         # Draw color information
-        font = pygame.font.Font(None, 36)
-        color_text = "White" if self.rect_color == (255, 255, 255) else "Black"
-        text = font.render(
-            f"Background: {color_text} (SPACE to toggle)", True, (255, 255, 255)
-        )
-        text_rect = text.get_rect()
-        text_rect.center = self.get_rect().center
-        self.env.display.blit(text, text_rect)
+        if not NO_REAL_VIDEO:  # pragma: no cover
+            font = pygame.font.Font(None, 36)
+            color_text = "White" if self.rect_color == (255, 255, 255) else "Black"
+            text = font.render(
+                f"Background: {color_text} (SPACE to toggle)", True, (255, 255, 255)
+            )
+            text_rect = text.get_rect()
+            text_rect.center = self.get_rect().center
+            self.env.display.blit(text, text_rect)
+
 
     def set_rect_color(self, color: Tuple[int, int, int]) -> None:
         """Set the color for background rectangles"""
