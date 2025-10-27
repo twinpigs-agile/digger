@@ -1,8 +1,0 @@
-{
-  "directional" : true,
-  "transform" : {"r": [], "l" : ["mirror"], "u": ["rotate", "rotate", "rotate", "mirror"], "d": ["rotate"]},
-  "frame_count" : 5,
-  "variations" : ["n"],
-  "animations": {"default": [0, 1, 2, 3, 4, 3, 2, 1]},
-  "anchors" : [[512, 512], [512, 512], [512, 512], [512, 512], [512, 512], [512, 512], [512, 512], [512, 512]]
-}
