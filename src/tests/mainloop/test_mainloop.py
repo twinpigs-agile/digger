@@ -1,7 +1,7 @@
 import unittest
 import pygame
 from mainloop.environment import Environment
-from mainloop.screens import Screen, Screens, Window, ExitMainLoop
+from mainloop.screens import Screen, Screens, Window, ExitMainLoop, View
 from mainloop.mainloop import MainLoop
 
 # ---------- Environment Tests ----------
@@ -243,3 +243,281 @@ class TestWindowGeometry(unittest.TestCase):
         screen_point = (25, 35)
         local_point = self.window.to_local_coords(screen_point)
         self.assertEqual(local_point, (15, 15))  # 25-10, 35-20
+
+
+# ---------- View Tests ----------
+
+
+class TestView(unittest.TestCase):
+    """Tests for the View base class."""
+
+    def setUp(self):
+        pygame.init()
+        self.display = pygame.display.set_mode((100, 100))
+        self.env = Environment(self.display)
+
+    def test_view_type_attribute(self):
+        """Test that View has a view_type attribute."""
+        view = View()
+        self.assertEqual(view.view_type, "base")
+
+    def test_view_custom_type(self):
+        """Test custom view types in subclasses."""
+
+        class PlayerView(View):
+            view_type = "player"
+
+        view = PlayerView()
+        self.assertEqual(view.view_type, "player")
+
+    def test_view_tick_not_implemented(self):
+        """Test that tick() raises NotImplementedError in base View."""
+        view = View()
+        with self.assertRaises(NotImplementedError):
+            view.tick()
+
+    def test_view_tick_implemented_in_subclass(self):
+        """Test that subclass can implement tick()."""
+
+        class TickingView(View):
+            def __init__(self):
+                super().__init__()
+                self.ticked = False
+
+            def tick(self):
+                self.ticked = True
+
+        view = TickingView()
+        view.tick()
+        self.assertTrue(view.ticked)
+
+    def test_view_window_association_with_window(self):
+        """Test that view correctly associates with window."""
+
+        class SimpleWindow(Window):
+            def tick(self, events):
+                pass
+
+        class SimpleView(View):
+            def tick(self):
+                pass
+
+        window = SimpleWindow(self.env)
+        view = SimpleView()
+
+        # Initially, view has no window
+        self.assertIsNone(view.get_window())
+
+        # Add view to window
+        window.add_view(0, view)
+        self.assertIs(view.get_window(), window)
+
+    def test_view_weak_reference_cleanup(self):
+        """Test that weak reference is cleared when window is destroyed."""
+
+        class SimpleWindow(Window):
+            def tick(self, events):
+                pass
+
+        class SimpleView(View):
+            def tick(self):
+                pass
+
+        view = SimpleView()
+        window = SimpleWindow(self.env)
+        window.add_view(0, view)
+
+        # Verify window is associated
+        self.assertIs(view.get_window(), window)
+
+        # Remove view from window
+        window.remove_view(view)
+
+        # Weak reference should be None now
+        self.assertIsNone(view.get_window())
+
+    def test_view_weak_reference_after_window_deletion(self):
+        """Test that weak reference becomes None when window is garbage collected."""
+
+        class SimpleWindow(Window):
+            def tick(self, events):
+                pass
+
+        class SimpleView(View):
+            def tick(self):
+                pass
+
+        view = SimpleView()
+
+        # Create window in limited scope and associate view
+        window = SimpleWindow(self.env)
+        window.add_view(0, view)
+        window_id = id(window)
+
+        # Verify association
+        self.assertIsNotNone(view.get_window())
+
+        # Delete window
+        del window
+
+        # After garbage collection, weak reference should return None
+        self.assertIsNone(view.get_window())
+
+
+# ---------- Window with Views Tests ----------
+
+
+class SimpleView(View):
+    """Simple test view implementation."""
+
+    view_type = "simple"
+
+    def __init__(self):
+        super().__init__()
+        self.tick_count = 0
+
+    def tick(self):
+        self.tick_count += 1
+
+
+class ViewManagingWindow(Window):
+    """Window for testing view management."""
+
+    def tick(self, events):
+        # Tick all views
+        for _, view in self._views:
+            view.tick()
+
+
+class TestWindowViewManagement(unittest.TestCase):
+    """Tests for Window's view management capabilities."""
+
+    def setUp(self):
+        pygame.init()
+        self.display = pygame.display.set_mode((100, 100))
+        self.env = Environment(self.display)
+        self.window = ViewManagingWindow(self.env)
+
+    def test_add_view_to_window(self):
+        """Test adding a view to window."""
+        view = SimpleView()
+        self.window.add_view(5, view)
+
+        views = self.window.get_views()
+        self.assertEqual(len(views), 1)
+        self.assertEqual(views[0], (5, view))
+
+    def test_add_multiple_views_priority_order(self):
+        """Test that views are sorted by priority."""
+        view1 = SimpleView()
+        view2 = SimpleView()
+        view3 = SimpleView()
+
+        self.window.add_view(10, view1)
+        self.window.add_view(0, view2)
+        self.window.add_view(5, view3)
+
+        views = self.window.get_views()
+        self.assertEqual(len(views), 3)
+        self.assertEqual(views[0][1], view2)  # priority 0
+        self.assertEqual(views[1][1], view3)  # priority 5
+        self.assertEqual(views[2][1], view1)  # priority 10
+
+    def test_add_views_same_priority(self):
+        """Test that views with same priority maintain insertion order."""
+        view1 = SimpleView()
+        view2 = SimpleView()
+        view3 = SimpleView()
+
+        self.window.add_view(5, view1)
+        self.window.add_view(5, view2)
+        self.window.add_view(5, view3)
+
+        views = self.window.get_views()
+        self.assertEqual(len(views), 3)
+        # All have same priority, maintain insertion order
+        self.assertEqual(views[0][1], view1)
+        self.assertEqual(views[1][1], view2)
+        self.assertEqual(views[2][1], view3)
+
+    def test_remove_view_from_window(self):
+        """Test removing a view from window."""
+        view1 = SimpleView()
+        view2 = SimpleView()
+
+        self.window.add_view(0, view1)
+        self.window.add_view(1, view2)
+
+        self.assertEqual(len(self.window.get_views()), 2)
+
+        self.window.remove_view(view1)
+        views = self.window.get_views()
+        self.assertEqual(len(views), 1)
+        self.assertEqual(views[0][1], view2)
+
+        # view1 should no longer be associated with window
+        self.assertIsNone(view1.get_window())
+
+    def test_remove_nonexistent_view(self):
+        """Test removing a view that's not in the window."""
+        view1 = SimpleView()
+        view2 = SimpleView()
+
+        self.window.add_view(0, view1)
+
+        # Should not raise error when removing view that's not there
+        self.window.remove_view(view2)
+
+        # view1 should still be in window
+        self.assertEqual(len(self.window.get_views()), 1)
+
+    def test_window_tick_delegates_to_views(self):
+        """Test that window.tick() calls tick on all views."""
+        view1 = SimpleView()
+        view2 = SimpleView()
+
+        self.window.add_view(0, view1)
+        self.window.add_view(1, view2)
+
+        self.window.tick([])
+
+        self.assertEqual(view1.tick_count, 1)
+        self.assertEqual(view2.tick_count, 1)
+
+    def test_window_tick_calls_views_in_priority_order(self):
+        """Test that window.tick() calls views in priority order."""
+        view_calls = []
+
+        class TrackingView(View):
+            def __init__(self, name):
+                super().__init__()
+                self.name = name
+
+            view_type = "tracking"
+
+            def tick(self):
+                view_calls.append(self.name)
+
+        window = ViewManagingWindow(self.env)
+        view1 = TrackingView("high_priority")
+        view2 = TrackingView("low_priority")
+
+        window.add_view(0, view1)
+        window.add_view(10, view2)
+
+        window.tick([])
+
+        # Views should be ticked in priority order (0 first)
+        self.assertEqual(view_calls, ["high_priority", "low_priority"])
+
+    def test_get_views_returns_copy(self):
+        """Test that get_views() returns a copy, not the internal list."""
+        view = SimpleView()
+        self.window.add_view(0, view)
+
+        views1 = self.window.get_views()
+        views2 = self.window.get_views()
+
+        # Should be equal but not the same object
+        self.assertEqual(views1, views2)
+        self.assertIsNot(views1, views2)
