@@ -1,0 +1,8 @@
+{
+  "frame_count": 1,
+  "variations": ["a"],
+  "animations": {
+    "default": [0]
+  },
+  "anchors": [[0, 0]]
+}

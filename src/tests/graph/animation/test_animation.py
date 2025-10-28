@@ -151,3 +151,153 @@ class TestAnimatedSprite(BaseSurfaceTest):
         self.assertRaises(
             ValueError, AnimatedSprite, asset_path("bad_animation"), (1, 1)
         )
+
+    def test_optional_transform_handling(self):
+        """Test that sprite without transform section loads correctly."""
+        no_transform_dir = asset_path("no_transform")
+        sprite = AnimatedSprite(no_transform_dir, (1, 1))
+
+        # Should have loaded successfully
+        self.assertIsNotNone(sprite.animation_data)
+        self.assertNotIn("transform", sprite.animation_data)
+
+        # Create animation and verify it works
+        animation = sprite.create_animation()
+        self.assertEqual(animation.direction, "r")
+
+        # Should be able to set all directions
+        for direction in ["r", "l", "u", "d"]:
+            animation.set_direction(direction)
+            self.assertEqual(animation.direction, direction)
+            # Should not raise error when drawing
+            animation.draw(self.surface)
+
+    def test_shared_sprite_references_without_transform(self):
+        """Test that all directions share same sprite object when transform is absent."""
+        no_transform_dir = asset_path("no_transform")
+        sprite = AnimatedSprite(no_transform_dir, (1, 1))
+
+        # Get sprites for same frame/variation but different directions
+        key_r = ("a", 0, "r")
+        key_l = ("a", 0, "l")
+        key_u = ("a", 0, "u")
+        key_d = ("a", 0, "d")
+
+        sprite_r = sprite.sprites[key_r]
+        sprite_l = sprite.sprites[key_l]
+        sprite_u = sprite.sprites[key_u]
+        sprite_d = sprite.sprites[key_d]
+
+        # All should be the same object (not copies)
+        self.assertIs(
+            sprite_r, sprite_l, "Sprites should be same object for l direction"
+        )
+        self.assertIs(
+            sprite_r, sprite_u, "Sprites should be same object for u direction"
+        )
+        self.assertIs(
+            sprite_r, sprite_d, "Sprites should be same object for d direction"
+        )
+
+        # Verify they're tuples with same surface and anchor
+        surface_r, anchor_r = sprite_r
+        surface_l, anchor_l = sprite_l
+        self.assertIs(surface_r, surface_l, "Surface objects should be identical")
+        self.assertEqual(anchor_r, anchor_l, "Anchors should be equal")
+
+    def test_animation_length_method(self):
+        """Test get_animation_length method."""
+        animation = self.animated_sprite.create_animation()
+
+        # Default animation length
+        animations = self.animated_sprite.animation_data["animations"]
+        expected_length = len(animations["default"])
+        self.assertEqual(animation.get_animation_length(), expected_length)
+
+        # Test with different animations
+        for anim_name, frame_sequence in animations.items():
+            animation.start_animation(anim_name)
+            self.assertEqual(animation.get_animation_length(), len(frame_sequence))
+
+    def test_get_current_frame(self):
+        """Test get_current_frame method."""
+        animation = self.animated_sprite.create_animation()
+        length = animation.get_animation_length()
+
+        # Initial frame is 0
+        self.assertEqual(animation.get_current_frame(), 0)
+
+        # After next_frame
+        animation.next_frame()
+        self.assertEqual(animation.get_current_frame(), 1)
+
+        # Test frame progression
+        current = animation.get_current_frame()
+        animation.next_frame()
+        expected_next = (current + 1) % length
+        self.assertEqual(animation.get_current_frame(), expected_next)
+
+        # Test wrapping by advancing to end
+        animation.set_current_frame(length - 1)
+        self.assertEqual(animation.get_current_frame(), length - 1)
+        animation.next_frame()
+        self.assertEqual(animation.get_current_frame(), 0)  # Should wrap to 0
+
+    def test_set_current_frame(self):
+        """Test set_current_frame method."""
+        animation = self.animated_sprite.create_animation()
+        length = animation.get_animation_length()
+
+        # Set to valid frame
+        animation.set_current_frame(0)
+        self.assertEqual(animation.get_current_frame(), 0)
+
+        animation.set_current_frame(1)
+        self.assertEqual(animation.get_current_frame(), 1)
+
+        # Set to last frame
+        animation.set_current_frame(length - 1)
+        self.assertEqual(animation.get_current_frame(), length - 1)
+
+    def test_set_current_frame_wrapping(self):
+        """Test that set_current_frame wraps frame index."""
+        animation = self.animated_sprite.create_animation()
+        length = animation.get_animation_length()
+
+        # Set frame beyond length (should wrap)
+        animation.set_current_frame(length + 1)
+        self.assertEqual(animation.get_current_frame(), 1)
+
+        # Set frame much beyond length
+        animation.set_current_frame(length * 3 + 2)
+        self.assertEqual(animation.get_current_frame(), 2)
+
+    def test_set_current_frame_negative_raises_error(self):
+        """Test that set_current_frame rejects negative indices."""
+        animation = self.animated_sprite.create_animation()
+
+        with self.assertRaises(ValueError):
+            animation.set_current_frame(-1)
+
+        with self.assertRaises(ValueError):
+            animation.set_current_frame(-100)
+
+    def test_frame_control_with_different_animations(self):
+        """Test frame control with different animation sequences."""
+        animation = self.animated_sprite.create_animation()
+        animations = self.animated_sprite.animation_data["animations"]
+
+        for anim_name, frame_sequence in animations.items():
+            animation.start_animation(anim_name)
+            length = animation.get_animation_length()
+
+            # Set different frames and verify
+            for i in range(length):
+                animation.set_current_frame(i)
+                self.assertEqual(animation.get_current_frame(), i)
+                # Verify correct frame is in animation
+                expected_frame = frame_sequence[i]
+                actual_frame = animation.current_animation[
+                    animation.current_frame_index
+                ]
+                self.assertEqual(actual_frame, expected_frame)

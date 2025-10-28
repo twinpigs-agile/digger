@@ -27,22 +27,38 @@ class AnimatedSprite:
         self,
     ) -> Dict[Tuple[str, int, str], Tuple[pygame.Surface, List[int]]]:
         sprites = {}
+
+        # Get available directions from transform or use default
+        if "transform" in self.animation_data:
+            directions = cast(List[str], self.animation_data["transform"])
+        else:
+            directions = ["r"]
+
         for variation in cast(Dict[str, List[int]], self.animation_data["variations"]):
             for frame_index in range(cast(int, self.animation_data["frame_count"])):
                 filename = f"{variation}_{frame_index}.png"
                 image = load_image(os.path.join(self.path, filename)).convert_alpha()
                 original_size = image.get_size()
                 image = pygame.transform.scale(image, self.size)
-                for direction in cast(List[str], self.animation_data["transform"]):
-                    anchor = self._scale_anchor(
-                        cast(List[List[int]], self.animation_data["anchors"])[
-                            frame_index
-                        ],
-                        original_size,
-                    )
-                    sprites[(variation, frame_index, direction)] = (
-                        self._apply_transformations(image, direction, anchor)
-                    )
+
+                anchor = self._scale_anchor(
+                    cast(List[List[int]], self.animation_data["anchors"])[frame_index],
+                    original_size,
+                )
+
+                if "transform" in self.animation_data:
+                    # With transform: apply transformations per direction
+                    for direction in directions:
+                        sprites[(variation, frame_index, direction)] = (
+                            self._apply_transformations(
+                                image.copy(), direction, anchor[:]
+                            )
+                        )
+                else:
+                    base_sprite = (image, anchor)
+                    for direction in ["r", "l", "u", "d"]:
+                        sprites[(variation, frame_index, direction)] = base_sprite
+
         return sprites
 
     def _scale_anchor(
@@ -128,3 +144,39 @@ class Animation:
 
     def set_position(self, position: Tuple[int, int]) -> None:
         self.position = list(position)
+
+    def get_animation_length(self) -> int:
+        """
+        Get the number of frames in the current animation sequence.
+
+        Returns:
+            The number of frames in the current animation.
+        """
+        return len(self.current_animation)
+
+    def get_current_frame(self) -> int:
+        """
+        Get the index of the current frame in the animation sequence.
+
+        Returns:
+            The current frame index (0-based).
+        """
+        return self.current_frame_index
+
+    def set_current_frame(self, frame_index: int) -> None:
+        """
+        Set the current frame in the animation sequence.
+
+        Args:
+            frame_index: The frame index to set (0-based).
+                        Will be wrapped to valid range [0, animation_length).
+
+        Raises:
+            ValueError: If frame_index is negative.
+        """
+        if frame_index < 0:
+            raise ValueError(f"Frame index must be non-negative, got {frame_index}")
+
+        # Wrap frame index to valid range
+        animation_length = len(self.current_animation)
+        self.current_frame_index = frame_index % animation_length

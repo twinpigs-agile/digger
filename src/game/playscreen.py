@@ -31,7 +31,7 @@ class BackgroundWindow(Window):
             pygame.draw.rect(self.env.display, self.rect_color, rect)
 
         # Draw color information
-        if not NO_REAL_VIDEO:  # pragma: no cover
+        if not NO_REAL_VIDEO:  # pragma: no cover555555555vkv
             font = pygame.font.Font(None, 36)
             color_text = "White" if self.rect_color == (255, 255, 255) else "Black"
             text = font.render(
