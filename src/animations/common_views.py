@@ -34,7 +34,6 @@ class AnimatedSpriteView(View):
         if window is None:
             return
 
-        # Draw animation frame to the window's display surface
         # Convert position from local window coordinates to screen coordinates
         screen_pos = window.to_screen_coords(self._position)
         self.animation.set_position(screen_pos)
@@ -51,7 +50,8 @@ class AnimatedSpriteView(View):
             position: (x, y) position in local window coordinates.
         """
         self._position = position
-        self.animation.set_position(position)
+        # Don't set animation position yet - it will be done during tick()
+        # when we convert to screen coordinates
 
     def get_position(self) -> Tuple[int, int]:
         """Get the current position of the sprite."""

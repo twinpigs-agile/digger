@@ -10,11 +10,23 @@ def sign(x: int) -> int:
         return 0
 
 
+class BoardObject:
+    GOLD = 0
+    RUBY = 1
+    DIGGER = 2
+    HOBBIN = 3
+
+    def __init__(self, sc_coords: Tuple[Tuple[int, int], Tuple[int, int]]) -> None:
+        self.sc_coords = sc_coords
+
+
 class BoardModel:
     EMPTY = 0
     GOLD = 1
     RUBY = 2
     ROCK = 3
+    HOBBIN_START = 4
+    DIGGER_START = 5
 
     def __init__(self, size: Tuple[int, int], cell_size: int, data: List[str]) -> None:
         self.size = size  # Size of the board in large cells (sx, sy)
@@ -44,6 +56,8 @@ class BoardModel:
         "G": GOLD,
         "#": ROCK,
         "*": RUBY,
+        "H": HOBBIN_START,
+        "D": DIGGER_START,
         " ": EMPTY,
     }
     _decode_sc = {

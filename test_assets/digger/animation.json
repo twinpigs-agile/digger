@@ -1,0 +1,14 @@
+{
+  "frame_count": 2,
+  "variations": ["a"],
+  "transform": {
+    "r": [],
+    "l": ["mirror"],
+    "u": ["rotate"],
+    "d": ["rotate", "rotate", "rotate"]
+  },
+  "animations": {
+    "default": [0, 1]
+  },
+  "anchors": [[1, 1], [1, 1]]
+}

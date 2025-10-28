@@ -25,9 +25,9 @@ class TestBackgroundWindow(unittest.TestCase):
         self.background_window = BackgroundWindow(self.env, self.background_rects)
         self.background_window.set_rect(pygame.Rect(0, 0, 800, 600))
 
-    def test_initial_color_is_white(self):
+    def test_initial_color_is_black(self):
         """Test that initial background rectangle color is white"""
-        self.assertEqual(self.background_window.rect_color, (255, 255, 255))
+        self.assertEqual(self.background_window.rect_color, (0, 0, 0))
 
     def test_set_rect_color(self):
         """Test setting background rectangle color"""
@@ -56,20 +56,6 @@ class TestBackgroundWindow(unittest.TestCase):
 
         # Verify the method completed successfully
         self.assertTrue(True)  # If we get here, no exceptions were raised
-
-    def test_space_key_toggles_color_white_to_black(self):
-        """Test that SPACE key toggles color from white to black"""
-        # Create SPACE key event
-        space_event = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_SPACE)
-        events = [space_event]
-
-        # Initial color should be white
-        self.assertEqual(self.background_window.rect_color, (255, 255, 255))
-
-        self.background_window.tick(events)
-
-        # Color should now be black
-        self.assertEqual(self.background_window.rect_color, (0, 0, 0))
 
     def test_space_key_toggles_color_black_to_white(self):
         """Test that SPACE key toggles color from black to white"""

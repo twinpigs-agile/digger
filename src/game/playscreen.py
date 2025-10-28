@@ -1,9 +1,11 @@
 import pygame
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 from mainloop.screens import Screen, Window
 from mainloop.environment import Environment
 
-from settings import NO_REAL_VIDEO
+from settings import asset_path
+from animations.animated import AnimatedSprite
+from views.hobbin_view import HobbinView
 
 
 class BackgroundWindow(Window):
@@ -13,7 +15,7 @@ class BackgroundWindow(Window):
         super().__init__(env)
         self.color = (50, 50, 50)  # Dark gray background
         self.background_rects = background_rects
-        self.rect_color = (255, 255, 255)  # White color for background rectangles
+        self.rect_color = (0, 0, 0)  # White color for background rectangles
 
     def tick(self, events: list[pygame.event.Event]) -> None:
         # Handle keyboard events for color switching
@@ -30,17 +32,6 @@ class BackgroundWindow(Window):
         for rect in self.background_rects:
             pygame.draw.rect(self.env.display, self.rect_color, rect)
 
-        # Draw color information
-        if not NO_REAL_VIDEO:  # pragma: no cover555555555vkv
-            font = pygame.font.Font(None, 36)
-            color_text = "White" if self.rect_color == (255, 255, 255) else "Black"
-            text = font.render(
-                f"Background: {color_text} (SPACE to toggle)", True, (255, 255, 255)
-            )
-            text_rect = text.get_rect()
-            text_rect.center = self.get_rect().center
-            self.env.display.blit(text, text_rect)
-
     def set_rect_color(self, color: Tuple[int, int, int]) -> None:
         """Set the color for background rectangles"""
         self.rect_color = color
@@ -49,14 +40,66 @@ class BackgroundWindow(Window):
 class GameWindow(Window):
     """Game board window"""
 
-    def __init__(self, env: Environment, rect: pygame.Rect) -> None:
+    # Sprite asset definitions (name: path)
+    SPRITE_ASSETS = {
+        "hobbin": "hobbin",
+        "digger": "digger",
+    }
+
+    def __init__(
+        self,
+        env: Environment,
+        rect: pygame.Rect,
+        board_size: Tuple[int, int] = (10, 15),
+    ) -> None:
         super().__init__(env)
         self.set_rect(rect)
-        self.color = (0, 255, 0)  # Green color for game board
+        self.color = (24, 24, 24)  # Dark gray color for game board
+
+        # Store board dimensions (in cells)
+        self.board_width_cells, self.board_height_cells = board_size
+
+        # Calculate cell size (in pixels)
+        # Using integer division to ensure exact division
+        self.cell_width = rect.width // self.board_width_cells
+        self.cell_height = rect.height // self.board_height_cells
+
+        # Load sprites
+        self.sprites: Dict[str, AnimatedSprite] = {}
+        for sprite_name, sprite_path in self.SPRITE_ASSETS.items():
+            self.sprites[sprite_name] = AnimatedSprite(
+                asset_path(sprite_path),
+                (self.cell_width, self.cell_height),
+            )
+
+        # Create hobbin view in top-right cell
+        hobbin_sprite = self.sprites["digger"]
+        self.hobbin_view = HobbinView(
+            hobbin_sprite, (self.cell_width, self.cell_height)
+        )
+
+        # Position hobbin at top-right cell (in window-local coordinates)
+        # Top-right cell position: (board_width - 1, 0)
+        # Local position = cell center relative to window origin
+        local_x = (self.board_width_cells - 1) * self.cell_width + self.cell_width // 2
+        local_y = 0 + self.cell_height // 2
+
+        # Set position using window-local coordinates
+        self.hobbin_view.set_position((local_x, local_y))
+
+        # Add hobbin view to this window
+        self.add_view(priority=10, view=self.hobbin_view)
 
     def tick(self, events: list[pygame.event.Event]) -> None:
         # Fill game board with green color
         pygame.draw.rect(self.env.display, self.color, self.get_rect())
+
+        # Draw grid (optional - for visualization)
+        # TODO: Add grid lines
+
+        # Tick all views (including hobbin_view)
+        for _, view in self._views:
+            view.tick()
 
         # Game board rendering logic will be here
         # TODO: Add grid and game elements rendering
@@ -103,7 +146,7 @@ class PlayScreen(Screen):
         background_window = BackgroundWindow(env, background_rects)
         background_window.set_rect(pygame.Rect(0, 0, display_width, display_height))
 
-        game_window = GameWindow(env, game_rect)
+        game_window = GameWindow(env, game_rect, board_size=self.board_size)
         status_window = StatusWindow(env, status_rect)
 
         # Add windows with priorities (lower number = higher priority)

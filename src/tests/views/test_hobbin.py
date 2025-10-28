@@ -1,12 +1,12 @@
 """Tests for HobbinView rendering."""
 
 import pygame
-import os
 
 from mainloop.environment import Environment
 from mainloop.screens import Window
+from animations.animated import AnimatedSprite
 from views.hobbin_view import HobbinView
-from settings import ASSETS_DIR
+from settings import asset_path
 from tests.graph.base_surface import BaseSurfaceTest
 
 
@@ -19,14 +19,18 @@ class TestHobbinView(BaseSurfaceTest):
 
     def __init__(self, *args, **kwargs):
         super().__init__(SURFACE_SIZE, *args, **kwargs)
-        self.hobbin_path = os.path.join(ASSETS_DIR, "hobbin")
+        self.hobbin_path = asset_path("hobbin")
         self.env = None
         self.window = None
+        self.animated_sprite = None
 
     def setUp(self):
         super().setUp()
         # Create environment and window for view testing
         self.env = Environment(self.surface)
+
+        # Load hobbin sprite
+        self.animated_sprite = AnimatedSprite(self.hobbin_path, SPRITE_SIZE)
 
         # Create a simple window for testing
         class TestWindow(Window):
@@ -41,23 +45,24 @@ class TestHobbinView(BaseSurfaceTest):
     def tearDown(self):
         self.env = None
         self.window = None
+        self.animated_sprite = None
         super().tearDown()
 
     def test_hobbin_view_type(self):
         """Test that HobbinView has correct type."""
-        view = HobbinView(SPRITE_SIZE)
+        view = HobbinView(self.animated_sprite, SPRITE_SIZE)
         self.assertEqual(view.view_type, "hobbin")
 
     def test_hobbin_view_initialization(self):
         """Test that HobbinView initializes correctly."""
-        view = HobbinView(SPRITE_SIZE)
+        view = HobbinView(self.animated_sprite, SPRITE_SIZE)
         self.assertIsNotNone(view.animation)
         self.assertIsNotNone(view.animated_sprite)
         self.assertEqual(view.get_position(), (0, 0))
 
     def test_hobbin_direction_setting(self):
         """Test hobbin direction can be set."""
-        view = HobbinView(SPRITE_SIZE)
+        view = HobbinView(self.animated_sprite, SPRITE_SIZE)
 
         # Test setting all directions
         view.set_direction("r")
@@ -74,7 +79,7 @@ class TestHobbinView(BaseSurfaceTest):
 
     def test_hobbin_animation_sequence(self):
         """Test hobbin animation has correct structure."""
-        view = HobbinView(SPRITE_SIZE)
+        view = HobbinView(self.animated_sprite, SPRITE_SIZE)
 
         # Should have 2 frames
         self.assertEqual(view.animation.get_animation_length(), 2)
@@ -82,7 +87,7 @@ class TestHobbinView(BaseSurfaceTest):
 
     def test_hobbin_rendering_with_anchor(self):
         """Test hobbin rendering considers anchor point."""
-        view = HobbinView(SPRITE_SIZE)
+        view = HobbinView(self.animated_sprite, SPRITE_SIZE)
 
         # Anchor is at (1, 1) for each frame in animation.json
         # To place sprite's top-left corner at window position (0, 0),
@@ -119,7 +124,7 @@ class TestHobbinView(BaseSurfaceTest):
 
     def test_hobbin_frame_advancement(self):
         """Test hobbin animation frame advancement through view."""
-        view = HobbinView(SPRITE_SIZE)
+        view = HobbinView(self.animated_sprite, SPRITE_SIZE)
         view.set_position((0, 0))
         view.set_direction("r")
 
@@ -142,7 +147,7 @@ class TestHobbinView(BaseSurfaceTest):
 
     def test_hobbin_orphaned_view(self):
         """Test that hobbin view handles being orphaned gracefully."""
-        view = HobbinView(SPRITE_SIZE)
+        view = HobbinView(self.animated_sprite, SPRITE_SIZE)
         view.set_position((0, 0))
         view.set_direction("r")
 
