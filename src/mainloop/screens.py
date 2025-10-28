@@ -20,7 +20,7 @@ class View:
     view_type: str = "base"  # Subclasses should override this
 
     def __init__(self) -> None:
-        self._window: Optional[weakref.ref] = None  # Weak reference to parent window
+        self._window: Optional[weakref.ref["Window"]] = None  # Weak reference to parent window
 
     def tick(self) -> None:
         """Update view state. Must be implemented by subclasses."""

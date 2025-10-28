@@ -201,3 +201,4 @@ See `tests/mainloop/test_mainloop.py` for comprehensive test coverage.
 - **Clear Ownership**: Window owns views, not vice versa
 - **Flexibility**: Views can exist without a window (temporary)
 
+
