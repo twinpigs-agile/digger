@@ -352,7 +352,7 @@ class TestView(unittest.TestCase):
         # Create window in limited scope and associate view
         window = SimpleWindow(self.env)
         window.add_view(0, view)
-        window_id = id(window)
+        # window_id = id(window)
 
         # Verify association
         self.assertIsNotNone(view.get_window())
